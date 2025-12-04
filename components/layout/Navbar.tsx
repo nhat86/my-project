@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+   const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
+
 
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
@@ -22,7 +27,13 @@ export default function Navbar() {
           <Link href="/contact">Liên hệ</Link>
           <Link href="/cart">Giỏ hàng</Link>
         </div>
-
+        {/* Nút toggle tích hợp trong Navbar */}
+        <button
+            onClick={() => setIsDark(!isDark)}
+            className="px-4 py-2 border rounded bg-gray-100 dark:bg-gray-700"
+        >
+            {isDark ? "Light" : "Dark"}
+        </button>
         {/* Mobile */}
         <button
           className="md:hidden"
