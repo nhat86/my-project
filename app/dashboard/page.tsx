@@ -1,6 +1,6 @@
-import "./globals.css";
-import Sidebar from "./components/layout/Sidebar";
-import AdminNavbar from "./components/layout/AdminNavbar";
+import "../globals.css";
+import Sidebar from "../../components/layout/Sidebar";
+import AdminNavbar from "../../components/layout/AdminNavbar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
