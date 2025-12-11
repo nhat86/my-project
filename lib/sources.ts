@@ -1,10 +1,9 @@
-// lib/sources.ts
-
 export type CategorySources = {
   name: string;
   sites: { name: string; url: string }[];
 };
 
+// Danh sách site cho mỗi category
 export const SOURCES: CategorySources[] = [
   {
     name: "nước hoa",
@@ -30,3 +29,10 @@ export const SOURCES: CategorySources[] = [
     ],
   },
 ];
+
+// Từ khóa cho mỗi category để detect
+export const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  "nước hoa": ["nuoc hoa", "perfume", "parfum", "huong", "nuoc hoa nu", "nuoc hoa nam"],
+  "quần áo": ["quan ao", "ao", "vay", "trang phuc", "shirt", "pants", "tui xach", "giay"],
+  "điện tử": ["dien tu", "laptop", "smartphone", "tv", "dien thoai", "may tinh"],
+};

@@ -1,50 +1,53 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { detectCategory } from "@/lib/detectCategory";
+import { SOURCES } from "@/lib/sources";
 
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
-    if (!message) {
-      return NextResponse.json({ reply: { suggestedProducts: [] } });
-    }
+    if (!message) return NextResponse.json({ reply: { suggestedProducts: [] } });
 
     const category = detectCategory(message);
+
+    if (!category) {
+      return NextResponse.json({
+        reply: { suggestedProducts: [], message: "Xin loi, minh chua hieu ban muon san pham loai nao." },
+      });
+    }
+
     const sites = category.sites;
 
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    // Gọi AI
     const response = await client.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: [
         {
           role: "user",
           content: `
-Bạn là trợ lý gợi ý sản phẩm cho khách Việt.
-Chỉ gợi ý sản phẩm trong danh mục: "${category.name}".
+Ban la tro ly goi y san pham cho khach Viet.
+Chi goi y san pham trong danh muc: "${category.name}".
+Tra JSON duy nhat, khong them chu khac.
 
-⚠️ TRẢ VỀ DUY NHẤT JSON, KHÔNG THÊM CHỮ BÊN NGOÀI.
-
-Format JSON bắt buộc:
+Format JSON (phải trả về ÍT NHẤT 6 sản phẩm, có thể hơn nếu hợp lý):
 {
   "suggestedProducts": [
     {
-      "name": "Tên sản phẩm bằng tiếng Việt",
-      "description": "Mô tả ngắn gọn tiếng Việt",
-      "volume": "Dung tích (nếu có)",
-      "estimatedPrice": "Giá ước tính (€)",
-      "websites": [
-        { "name": "Sephora", "url": "https://www.sephora.fr" },
-        ...
-      ]
+      "name": "Ten san pham bang tieng Viet",
+      "description": "Mo ta ngan gon tieng Viet",
+      "volume": "Dung tich / Size / Thong so",
+      "price": "So (Euro)"
     }
   ]
 }
 
-Danh sách website hợp lệ: ${JSON.stringify(sites, null, 2)}
+Tra đúng JSON. KHÔNG giải thích. KHÔNG thêm chữ ngoài JSON.
+Phải trả về 6–10 sản phẩm phù hợp nhất.
 
-Câu hỏi: "${message}"
+Danh sach website hop le: ${JSON.stringify(sites, null, 2)}
+
+Cau hoi: "${message}"
           `,
         },
       ],
@@ -59,14 +62,17 @@ Câu hỏi: "${message}"
       parsed = { suggestedProducts: [] };
     }
 
-    // Gắn tất cả website
-    const productsWithWebsites = (parsed.suggestedProducts || []).map((p: any) => ({
-      name: p.name,
-      description: p.description,
-      volume: p.volume || "",
-      estimatedPrice: p.price ? `${p.price}€ (ước tính)` : "Giá ước tính",
-      websites: sites,
-    }));
+    // Chuẩn hóa tên trường chung: 'technical'
+  // Chuẩn hóa tên trường chung: 'technical'
+  const productsWithWebsites = (parsed.suggestedProducts || []).map((p: any) => ({
+    name: p.name,
+    description: p.description,
+    technical: p.volume || "",       // volume dùng cho tất cả category
+    estimatedPrice: Number(p.price) || 0,
+    websites: sites,
+  }));
+
+
 
     return NextResponse.json({
       reply: { suggestedProducts: productsWithWebsites },
