@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
-import { detectCategory } from "@/lib/detectCategory";
 
 export async function POST(req: Request) {
   try {
@@ -9,70 +8,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: { suggestedProducts: [] } });
     }
 
-    const category = detectCategory(message);
-    const sites = category.sites;
+    if (!process.env.GROQ_API_KEY) {
+      console.error("Missing GROQ_API_KEY");
+      return NextResponse.json({ reply: { suggestedProducts: [] }, error: "Missing API Key" }, { status: 500 });
+    }
 
-    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
-    // Gọi AI
-    const response = await client.chat.completions.create({
-      model: "openai/gpt-oss-120b",
-      messages: [
-        {
-          role: "user",
-          content: `
-Bạn là trợ lý gợi ý sản phẩm cho khách Việt.
-Chỉ gợi ý sản phẩm trong danh mục: "${category.name}".
-
-⚠️ TRẢ VỀ DUY NHẤT JSON, KHÔNG THÊM CHỮ BÊN NGOÀI.
-
+    const prompt = `
+Bạn là trợ lý thương mại Việt Nam.
+⚠️ CHỈ TRẢ VỀ JSON THUẦN.
 Format JSON bắt buộc:
 {
   "suggestedProducts": [
     {
-      "name": "Tên sản phẩm bằng tiếng Việt",
-      "description": "Mô tả ngắn gọn tiếng Việt",
+      "name": "Tên sản phẩm",
+      "description": "Mô tả ngắn",
       "volume": "Dung tích (nếu có)",
       "estimatedPrice": "Giá ước tính (€)",
       "websites": [
-        { "name": "Sephora", "url": "https://www.sephora.fr" },
-        ...
+        { "name": "Tên web", "url": "https://..." }
       ]
     }
   ]
 }
-
-Danh sách website hợp lệ: ${JSON.stringify(sites, null, 2)}
-
 Câu hỏi: "${message}"
-          `,
-        },
-      ],
+`;
+
+    const response = await client.chat.completions.create({
+      model: "openai/gpt-oss-120b",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
     });
 
-    const aiReply = response.choices?.[0]?.message?.content || "{}";
+    const raw = response.choices?.[0]?.message?.content || "{}";
 
     let parsed;
     try {
-      parsed = JSON.parse(aiReply);
+      parsed = JSON.parse(raw.trim());
     } catch {
+      console.error("JSON parse lỗi từ AI:", raw);
       parsed = { suggestedProducts: [] };
     }
 
-    // Gắn tất cả website
-    const productsWithWebsites = (parsed.suggestedProducts || []).map((p: any) => ({
-      name: p.name,
-      description: p.description,
-      volume: p.volume || "",
-      estimatedPrice: p.price ? `${p.price}€ (ước tính)` : "Giá ước tính",
-      websites: sites,
-    }));
-
-    return NextResponse.json({
-      reply: { suggestedProducts: productsWithWebsites },
-    });
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ reply: { suggestedProducts: [] } });
+    return NextResponse.json({ reply: parsed });
+  } catch (err: any) {
+    console.error("API error:", err);
+    return NextResponse.json({ reply: { suggestedProducts: [] }, error: err.message }, { status: 500 });
   }
 }
