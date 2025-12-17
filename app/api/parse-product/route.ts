@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import * as cheerio from "cheerio";
 import { NextResponse } from "next/server";
 
-// --- helper parse price string ---
+// --- helper function parse price string ---
 function parsePrice(priceStr: string | undefined | null): number | null {
   if (!priceStr) return null;
 
@@ -18,11 +18,11 @@ function parsePrice(priceStr: string | undefined | null): number | null {
   return isNaN(num) ? null : Math.round(num * 100) / 100;
 }
 
-// --- extract price fallback (JSON-LD / selectors / regex) ---
+// --- extract price from JSON-LD, selectors, or regex ---
 function extractPrice($: cheerio.Root, html: string): number | null {
   let price: number | null = null;
 
-  // 1️⃣ JSON-LD
+  // 1️⃣ Try JSON-LD first
   $('script[type="application/ld+json"]').each((_, el) => {
     if (price !== null) return;
     try {
@@ -30,13 +30,15 @@ function extractPrice($: cheerio.Root, html: string): number | null {
       if (!jsonText) return;
       const data = JSON.parse(jsonText);
       const offer = Array.isArray(data) ? data[0]?.offers : data?.offers;
-      if (offer?.price) price = parsePrice(offer.price);
+      if (offer?.price) {
+        price = parsePrice(offer.price);
+      }
     } catch {}
   });
 
   if (price !== null) return price;
 
-  // 2️⃣ Common selectors
+  // 2️⃣ Try common selectors
   const priceSelectors = [
     '[itemprop="price"]',
     '[data-sqe="price"]',
@@ -57,33 +59,11 @@ function extractPrice($: cheerio.Root, html: string): number | null {
 
   if (price !== null) return price;
 
-  // 3️⃣ Regex fallback
+  // 3️⃣ Regex fallback in HTML
   const match = html.match(/"price"\s*:\s*"([\d.,]+)"/);
   if (match) price = parsePrice(match[1]);
 
   return price;
-}
-
-// --- get Sephora product ID from URL ---
-function getSephoraProductId(url: string): string | null {
-  const match = url.match(/-P(\d+)\.html$/);
-  return match ? match[1] : null;
-}
-
-// --- fetch Sephora API for price ---
-async function fetchSephoraPrice(productId: string): Promise<number | null> {
-  try {
-    const apiUrl = `https://www.sephora.fr/api/catalog/products/${productId}`;
-    const res = await fetch(apiUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const priceStr = data?.offers?.price;
-    if (!priceStr) return null;
-    return Math.round(parseFloat(priceStr) * 100) / 100;
-  } catch {
-    return null;
-  }
 }
 
 // --- route POST ---
@@ -113,21 +93,16 @@ export async function POST(req: Request) {
       image = imgRaw.startsWith('//') ? 'https:' + imgRaw : new URL(imgRaw, url).toString();
     }
 
+    // size detection
     const sizeRegex = /(\d+(\.\d+)?\s?(ml|mL|g|kg|L|l|oz|cl))/gi;
     const sizeMatches = html.match(sizeRegex);
     const size = sizeMatches?.[0] || null;
 
-    // --- price ---
-    let price_eur: number | null = null;
-    const sephoraId = getSephoraProductId(url);
-    if (sephoraId) {
-      price_eur = await fetchSephoraPrice(sephoraId);
-    }
-    if (price_eur === null) {
-      price_eur = extractPrice($, html);
-    }
+    // price
+    const price_eur = extractPrice($, html);
 
     const out = {
+      link: url,  
       title: title?.trim() || null,
       description: description?.trim() || null,
       price_eur,
