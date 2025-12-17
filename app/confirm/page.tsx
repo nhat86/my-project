@@ -14,7 +14,18 @@ type Rate = {
 export default function ConfirmPage() {
   const [product, setProduct] = useState<any>(null);
   const [rate, setRate] = useState<Rate | null>(null);
+
   const [showContactModal, setShowContactModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const [customer, setCustomer] = useState({
+  name: '',
+  contact: '',
+  deliveryMethod: 'warehouse', // 'warehouse' | 'home'
+  address: '',
+});
+
 
   const FALLBACK_RATE = 30000;
 
@@ -147,12 +158,19 @@ export default function ConfirmPage() {
             {rate && `(${formatVND(q.total * rate.sell)})`}
           </p>
 
-          <button
-            className="w-full mt-4 px-4 py-3 bg-green-600 text-white rounded font-semibold"
-            onClick={() => setShowContactModal(true)}
-          >
-            ✅ Xác nhận mua & nhận báo giá
-          </button>
+          
+        <button
+        className="w-full px-4 py-3 bg-green-600 text-white rounded font-semibold disabled:opacity-50"
+        disabled={!product?.price_eur}
+        onClick={() => setShowContactModal(true)}
+      >
+        ✅ Xác nhận mua sản phẩm & nhận báo giá
+      </button>
+      {message && (
+        <div className="mb-4 p-3 rounded bg-green-50 border border-green-300 text-green-700">
+          {message}
+        </div>
+      )}
         </div>
 
         {/* SIDEBAR */}
@@ -233,6 +251,133 @@ export default function ConfirmPage() {
           </div>
         </aside>
       </div>
+      {/* ================= MODAL ================= */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">
+              Thông tin liên hệ để gửi báo giá
+            </h2>
+
+            <div className="mb-3">
+              <label className="font-semibold">Họ và tên *</label>
+              <input
+                className="w-full border px-3 py-2 rounded"
+                value={customer.name}
+                onChange={(e) =>
+                  setCustomer({ ...customer, name: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="font-semibold">Email / Messenger *</label>
+              <input
+                className="w-full border px-3 py-2 rounded"
+                value={customer.contact}
+                onChange={(e) =>
+                  setCustomer({ ...customer, contact: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="font-semibold block mb-2">
+                Hình thức nhận hàng *
+              </label>
+
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="warehouse"
+                    checked={customer.deliveryMethod === 'warehouse'}
+                    onChange={() =>
+                      setCustomer({ ...customer, deliveryMethod: 'warehouse', address: '' })
+                    }
+                  />
+                  Nhận tại kho TP.HCM
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="home"
+                    checked={customer.deliveryMethod === 'home'}
+                    onChange={() =>
+                      setCustomer({ ...customer, deliveryMethod: 'home' })
+                    }
+                  />
+                  Gửi về nhà
+                </label>
+              </div>
+            </div>
+            {customer.deliveryMethod === 'home' && (
+              <div className="mb-4">
+                <label className="font-semibold">Địa chỉ nhận hàng *</label>
+                <input
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Ví dụ: 123 Nguyễn Văn Cừ, Quận 5, TP.HCM"
+                  value={customer.address}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, address: e.target.value })
+                  }
+                />
+              </div>
+            )}
+
+
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setShowContactModal(false)}
+                disabled={loading}
+              >
+                Hủy
+              </button>
+
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+                disabled={!customer.name || !customer.contact || loading ||
+  (customer.deliveryMethod === 'home' && !customer.address)}
+                onClick={async () => {
+                  setLoading(true);
+                  setMessage(null);
+
+                  try {
+                    const res = await fetch('/api/send-purchase', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        product,
+                        quote: calcTotal(product),
+                        customer,
+                      }),
+                    });
+
+                    if (!res.ok) throw new Error();
+
+                    setMessage(
+                      '✅ Đã gửi thông tin! Chúng tôi sẽ liên hệ bạn sớm.'
+                    );
+                    sessionStorage.removeItem('parsed_product');
+                    setShowContactModal(false);
+                    setCustomer({ name: '', contact: '' });
+                  } catch {
+                    setMessage('❌ Có lỗi xảy ra, vui lòng thử lại.');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? 'Đang gửi...' : 'Xác nhận & gửi báo giá'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
