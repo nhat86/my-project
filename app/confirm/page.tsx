@@ -108,13 +108,14 @@ export default function ConfirmPage() {
 
   // ================= CALC =================
   function calcTotal(p: any) {
+    const exchangeRate = rate ? rate.sell : FALLBACK_RATE;
     const price = p?.price_eur || 0;
     const serviceRate = price < 100 ? 0.1 : 0.15;
     const service = +(price * serviceRate).toFixed(2);
     const weightKg = p?.weight_kg || 1;
     const shipping = +(15 * weightKg).toFixed(2);
     const total = +(price + service + shipping).toFixed(2);
-    return { price, service, shipping, total };
+    return { price, service, shipping, total, exchangeRate };
   }
 
   const formatVND = (v: number) =>
