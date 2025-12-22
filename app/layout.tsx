@@ -1,9 +1,20 @@
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import DarkModeProvider from "@/components/DarkModeProvider";
 import { UserProvider } from "./context/UserContext"; // import UserProvider
+import { Poppins, Dancing_Script } from "next/font/google";
 
+export const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-poppins",
+});
+
+export const dancing = Dancing_Script({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  variable: "--font-dancing",
+});
 export const metadata = {
   title: "Vietnam-France Shop",
   description: "Votre boutique Vietnamienne en France",
@@ -14,13 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body className="min-h-screen flex flex-col">
         <UserProvider> {/* Wrap toàn bộ app bằng UserProvider */}
-          <DarkModeProvider>
+          {/*<DarkModeProvider>*/}
             <Navbar />
             <main className="flex-1 container mx-auto px-4 py-6">
               {children}
             </main>
             <Footer />
-          </DarkModeProvider>
+          {/*</DarkModeProvider>*/}
         </UserProvider>
       </body>
     </html>

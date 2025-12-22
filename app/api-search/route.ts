@@ -39,7 +39,7 @@ Format JSON:
     }
   ]
 }
-
+BẮT BUỘC gợi ý ÍT NHẤT 10 sản phẩm, TỐI ĐA 20 sản phẩm.
 Chỉ gợi ý sản phẩm trong category: "${category.name}".
 Websites chỉ lấy từ danh sách này: ${JSON.stringify(sites, null, 2)}
 
