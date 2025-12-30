@@ -18,18 +18,27 @@ export default function Navbar() {
     <nav className="bg-white shadow sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
 
-<Link href="/" className="flex flex-col items-center leading-tight">
-<img src="/logo.png" alt="Logo" className="h-16 md:h-24 w-auto" />
+<Link
+  href="/"
+  className="flex flex-col items-center leading-tight select-none"
+>
+  <img
+    src="/logo.png"
+    alt="PhapShopping"
+    className="h-16 md:h-24 w-auto mb-1"
+  />
+
   {/* Logo text */}
-  <span className="text-1xl md:text-2xl font-bold text-blue-800 tracking-wide font-[Poppins]">
+  <span className="text-xl md:text-2xl font-semibold text-blue-800 tracking-wide font-['Poppins']">
     PhapShopping
   </span>
 
   {/* Tagline */}
-  <span className="text-sm md:text-base text-red-600 mt-1 font-[Dancing_Script] text-center">
-    Mua hộ đồ Pháp cho người Việt
+  <span className="text-sm md:text-base text-slate-500 italic text-center font-sans">
+    Mua hộ hàng Pháp cho người Việt
   </span>
 </Link>
+
 
         {/* Desktop menu */}
         <div className="hidden md:flex gap-6 items-center relative text-lg">

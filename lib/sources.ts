@@ -13,7 +13,8 @@ export type CategorySources = {
 export const SOURCES: CategorySources[] = [
   // 1. Beauty
   {
-    name: "beauty",
+    name: "my_pham",
+    name_vi: "Mỹ phẩm",
     keywords: [
       "nước hoa", "nuoc hoa", "perfume", "parfum",
       "mỹ phẩm", "my pham", "cosmetics", "skincare",
@@ -63,7 +64,8 @@ export const SOURCES: CategorySources[] = [
 
   // 2. Fashion
   {
-    name: "fashion",
+    name: "thoi_trang",
+    name_vi: "Thời trang",
     keywords: [
       "quần áo", "quan ao", "áo", "ao", "váy", "vay",
       "quần", "quan", "jean", "shirt",
@@ -112,7 +114,8 @@ export const SOURCES: CategorySources[] = [
 
   // 3. Shoes
   {
-    name: "shoes",
+    name: "giay_dep",
+    name_vi: "Giày dép",
     keywords: [
       "giày", "giay", "giày dép", "giay dep",
       "sneaker", "sneakers", "shoes", "chaussures"
@@ -159,7 +162,8 @@ export const SOURCES: CategorySources[] = [
 
   // 4. Bags & Accessories
   {
-    name: "bags",
+    name: "tui_xach",
+    name_vi: "Túi xách",
     keywords: [
       "túi xách", "tui xach", "handbag",
       "sac", "sac à main", "ví", "wallet", "phụ kiện"
@@ -200,7 +204,8 @@ export const SOURCES: CategorySources[] = [
 
   // 5. Eyewear
   {
-    name: "eyewear",
+    name: "kinh_mat",
+    name_vi: "Kính mắt",
     keywords: [
       "kính", "kinh", "kính mát",
       "sunglasses", "lunettes"
@@ -247,7 +252,8 @@ export const SOURCES: CategorySources[] = [
 
   // 6. Supplements
   {
-    name: "supplements",
+    name: "thuoc_bo",
+    name_vi: "Thuốc bổ",
     keywords: [
       "thuốc bổ", "thực phẩm chức năng",
       "vitamin", "complément alimentaire", "probiotic"
@@ -276,7 +282,8 @@ export const SOURCES: CategorySources[] = [
 
   // 8. Sports & Outdoor
   {
-    name: "sports",
+    name: "the_thao",
+    name_vi: "Thể thao",
     keywords: [
       "đồ thể thao", "sports", "gym", "fitness",
       "outdoor", "camping", "running", "swimming"
