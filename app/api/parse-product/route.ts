@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import * as cheerio from "cheerio";
 import { NextResponse } from "next/server";
+import type { Element } from "cheerio";
 
 // --- helper function parse price string ---
 function parsePrice(priceStr: string | undefined | null): number | null {
@@ -23,7 +24,7 @@ function extractPrice($: any, html: string): number | null {
   let price: number | null = null;
 
   // 1️⃣ Try JSON-LD first
-  $('script[type="application/ld+json"]').each((_: number, el) => {
+  $('script[type="application/ld+json"]').each((_: number, el: Element) => {
     if (price !== null) return;
     try {
       const jsonText = $(el).html();
