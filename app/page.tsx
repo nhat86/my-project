@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { categories } from "./data/categories";
-import Chatbox from "../components/ChatBox";
-
+import WinterPopup from "../components/PopupWinterSale";
 export default function Home() {
   const steps = [
     {
@@ -28,6 +27,17 @@ export default function Home() {
 
   return (
     <main className="px-4 py-12 space-y-20">
+{/*<WinterPopup />*}
+{/* ================= WINTER SALE BANNER ================= */}
+<section className="bg-blue-50 p-6 rounded-2xl text-center max-w-5xl mx-auto mb-12 relative">
+  <h2 className="text-3xl md:text-4xl font-bold text-red-600 mb-2">
+    ❄️ Khuyến mãi mùa đông từ Pháp – Giảm tới 50%-70%!
+  </h2>
+  <p className="text-slate-700 mb-4">
+    Diễn ra từ thứ Tư, 7 tháng 1 đến thứ Ba, 3 tháng 2 năm 2026 – Đừng bỏ lỡ!
+  </p>
+</section>
+
 
       {/* ================= HERO ================= */}
       <section className="text-center max-w-4xl mx-auto space-y-4">

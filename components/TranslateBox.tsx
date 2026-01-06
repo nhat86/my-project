@@ -24,7 +24,7 @@ export default function TranslateBox() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -52,6 +52,10 @@ export default function TranslateBox() {
     }
   };
 
+  const clearHistory = () => {
+    setMessages([]);
+  };
+
   return (
     <div className="w-full flex flex-col border rounded-xl p-3 bg-white">
       {/* Chọn hướng dịch */}
@@ -76,6 +80,15 @@ export default function TranslateBox() {
         >
           🇻🇳 → 🇫🇷
         </button>
+        {/* Nút xóa lịch sử */}
+        {messages.length > 0 && (
+          <button
+            onClick={clearHistory}
+            className="ml-auto px-3 py-1 rounded-full border bg-red-600 text-white hover:bg-red-700 text-sm"
+          >
+            Xóa lịch sử
+          </button>
+        )}
       </div>
 
       {/* Input */}
@@ -89,7 +102,7 @@ export default function TranslateBox() {
       />
 
       {/* Lịch sử dịch */}
-      <div className="flex flex-col gap-2 max-h-96 overflow-y-auto p-2 border rounded-lg bg-gray-50 text-sm">
+      <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto p-2 border rounded-lg bg-gray-50 text-sm">
         {messages.map((msg, idx) => (
           <div key={idx} className="flex flex-col gap-1">
             <div className="text-gray-700">
