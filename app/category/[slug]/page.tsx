@@ -53,7 +53,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <section className="bg-slate-50 p-8 rounded-2xl">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-            {category.title}
+            {category.name_vi} - Các website nổi bật
           </h2>
 
           <span className="text-sm text-slate-500">
