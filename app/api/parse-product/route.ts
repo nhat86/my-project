@@ -23,7 +23,7 @@ function extractPrice($: any, html: string): number | null {
   let price: number | null = null;
 
   // 1️⃣ Try JSON-LD first
-  $('script[type="application/ld+json"]').each((_, el) => {
+  $('script[type="application/ld+json"]').each((_: number, el) => {
     if (price !== null) return;
     try {
       const jsonText = $(el).html();
