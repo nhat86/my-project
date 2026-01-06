@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import * as cheerio from "cheerio";
 import { NextResponse } from "next/server";
-import type { Element } from "cheerio";
+import type { Element } from "domhandler";
 
 // --- helper function parse price string ---
 function parsePrice(priceStr: string | undefined | null): number | null {
