@@ -7,6 +7,7 @@ export type SiteSource = {
 
 export type CategorySources = {
   name: string;
+  name_vi: string;
   keywords: string[];
   sites: SiteSource[];
 };
