@@ -19,7 +19,7 @@ function parsePrice(priceStr: string | undefined | null): number | null {
 }
 
 // --- extract price from JSON-LD, selectors, or regex ---
-function extractPrice($: cheerio.Root, html: string): number | null {
+function extractPrice($: any, html: string): number | null {
   let price: number | null = null;
 
   // 1️⃣ Try JSON-LD first
