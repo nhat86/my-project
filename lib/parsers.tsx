@@ -29,7 +29,14 @@ export function parseSephora($: cheerio.CheerioAPI, url: string): Product {
   const price = parsePrice(priceStr);
   const description = $('meta[name="description"]').attr('content') || $('p').first().text();
   const image = $('meta[property="og:image"]').attr('content');
-  return { title, description, price_eur: price, size: parseSize($.html()), image: image ? new URL(image, url).toString() : null, source: url };
+  return {
+    title,
+    description,
+    price_eur: price,
+    size: parseSize($.html()),
+    image: image ? new URL(image, url).toString() : null,
+    source: url,
+};
 }
 
 // parser cho Nocibé
