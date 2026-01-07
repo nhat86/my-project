@@ -1,4 +1,4 @@
-import ProductCard from "./ProductCard";
+import ProductCard from "./ProductCard.tsx.disabled";
 
 const sample = [
   { id: 1, name: "Nước mắm Phú Quốc", price: 8.5, image: "/images/nuoc-mam.jpg" },
