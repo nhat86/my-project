@@ -28,14 +28,16 @@ export function parseSephora($: cheerio.CheerioAPI, url: string): Product {
   const priceStr = $('[data-at="product_price"]').text();
   const price = parsePrice(priceStr);
   const description = $('meta[name="description"]').attr('content') || $('p').first().text();
-  const image = $('meta[property="og:image"]').attr('content');
-  return {
-    title,
-    description,
-    price_eur: price,
-    size: parseSize($.html()),
-    image: image ? new URL(image, url).toString() : null,
-    source: url,
+  const image =
+  $('meta[property="og:image"]').attr('content') ?? null;
+
+return {
+  title,
+  description,
+  price_eur: price,
+  size: parseSize($.html()),
+  image: image ? new URL(image, url).toString() : null,
+  source: url,
 };
 }
 
