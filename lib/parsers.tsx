@@ -24,21 +24,30 @@ export function parsePrice(priceStr: string | undefined | null): number | null {
 
 // parser cho Sephora
 export function parseSephora($: cheerio.CheerioAPI, url: string): Product {
-  const title = $('h1[data-at="product_name"]').text() || $('meta[property="og:title"]').attr('content');
-  const priceStr = $('[data-at="product_price"]').text();
-  const price = parsePrice(priceStr);
-  const description = $('meta[name="description"]').attr('content') || $('p').first().text();
-  const image =
-  $('meta[property="og:image"]').attr('content') ?? null;
+  const title =
+  $('meta[property="og:title"]').attr('content')
+  ?? $('title').text()
+  ?? null;
 
-return {
-  title,
-  description,
-  price_eur: price,
-  size: parseSize($.html()),
-  image: image ? new URL(image, url).toString() : null,
-  source: url,
-};
+  const description =
+    $('meta[name="description"]').attr('content')
+    ?? $('p').first().text()
+    ?? null;
+
+  const image =
+    $('meta[property="og:image"]').attr('content') ?? null;
+
+  const price = parsePrice($) ?? null;
+
+
+  return {
+    title,
+    description,
+    price_eur: price,
+    size: parseSize($.html()),
+    image: image ? new URL(image, url).toString() : null,
+    source: url,
+  };
 }
 
 // parser cho Nocibé
