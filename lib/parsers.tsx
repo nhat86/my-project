@@ -37,7 +37,7 @@ export function parseSephora($: cheerio.CheerioAPI, url: string): Product {
   const image =
     $('meta[property="og:image"]').attr('content') ?? null;
 
-  const price = parsePrice($) ?? null;
+  const price = parsePrice($.html()) ?? null;
 
 
   return {
