@@ -1,4 +1,4 @@
-import { createClient, User } from "@supabase/supabase-js";
+/*import { createClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export const supabase = createClient(
@@ -14,4 +14,7 @@ export async function auth(): Promise<{ user: User } | null> {
   if (error) return null;
 
   return { user: data.user! };
+}*/
+export async function auth() {
+  return null;
 }
