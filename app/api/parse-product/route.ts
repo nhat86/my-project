@@ -1,3 +1,4 @@
+// parse-produit/route.ts
 export const runtime = "nodejs";
 
 import * as cheerio from "cheerio";
@@ -23,7 +24,7 @@ function parsePrice(priceStr: string | undefined | null): number | null {
 function extractPrice($: any, html: string): number | null {
   let price: number | null = null;
 
-  // 1️⃣ Try JSON-LD first
+  // 1️⃣ JSON-LD
   $('script[type="application/ld+json"]').each((_: number, el: Element) => {
     if (price !== null) return;
     try {
@@ -34,12 +35,14 @@ function extractPrice($: any, html: string): number | null {
       if (offer?.price) {
         price = parsePrice(offer.price);
       }
-    } catch {}
+    } catch (e) {
+      console.warn('JSON-LD parse error', e);
+    }
   });
 
   if (price !== null) return price;
 
-  // 2️⃣ Try common selectors
+  // 2️⃣ common selectors
   const priceSelectors = [
     '[itemprop="price"]',
     '[data-sqe="price"]',
@@ -60,11 +63,34 @@ function extractPrice($: any, html: string): number | null {
 
   if (price !== null) return price;
 
-  // 3️⃣ Regex fallback in HTML
+  // 3️⃣ regex fallback
   const match = html.match(/"price"\s*:\s*"([\d.,]+)"/);
   if (match) price = parsePrice(match[1]);
 
   return price;
+}
+
+// --- fetch with timeout & UA ---
+async function fetchWithTimeout(url: string, timeout = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    console.log('Fetching URL:', url);
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7'
+      },
+      redirect: 'follow',
+      signal: controller.signal
+    });
+
+    console.log('Fetch status:', res.status, res.statusText);
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
 }
 
 // --- route POST ---
@@ -73,8 +99,16 @@ export async function POST(req: Request) {
     const { url } = await req.json();
     if (!url) return NextResponse.json({ error: 'Missing url' }, { status: 400 });
 
-    const upstream = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0' } });
-    if (!upstream.ok) return NextResponse.json({ error: 'Failed to fetch url' }, { status: 400 });
+    let upstream;
+    try {
+      upstream = await fetchWithTimeout(url);
+      if (!upstream.ok) {
+        return NextResponse.json({ error: `Failed to fetch url (status ${upstream.status})` }, { status: 400 });
+      }
+    } catch (e: any) {
+      console.error('Fetch error:', e.message);
+      return NextResponse.json({ error: 'Failed to fetch url (network error or timeout)' }, { status: 500 });
+    }
 
     const html = await upstream.text();
     const $ = cheerio.load(html);
@@ -103,7 +137,7 @@ export async function POST(req: Request) {
     const price_eur = extractPrice($, html);
 
     const out = {
-      link: url,  
+      link: url,
       title: title?.trim() || null,
       description: description?.trim() || null,
       price_eur,
@@ -116,6 +150,7 @@ export async function POST(req: Request) {
     return NextResponse.json(out);
 
   } catch (e: any) {
+    console.error('Route error:', e.message);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
