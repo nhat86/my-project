@@ -5,8 +5,9 @@ import * as cheerio from "cheerio";
 import { NextResponse } from "next/server";
 import type { Element } from "domhandler";
 
-// --- helper function parse price string ---
-function parsePrice(priceStr: string | undefined | null): number | null {
+/* ================= helpers ================= */
+
+function parsePrice(priceStr?: string | null): number | null {
   if (!priceStr) return null;
 
   let cleaned = priceStr.replace(/[^0-9.,]/g, '');
@@ -20,40 +21,32 @@ function parsePrice(priceStr: string | undefined | null): number | null {
   return isNaN(num) ? null : Math.round(num * 100) / 100;
 }
 
-// --- extract price from JSON-LD, selectors, or regex ---
 function extractPrice($: any, html: string): number | null {
   let price: number | null = null;
 
-  // 1️⃣ JSON-LD
-  $('script[type="application/ld+json"]').each((_: number, el: Element) => {
+  $('script[type="application/ld+json"]').each((_, el: Element) => {
     if (price !== null) return;
     try {
       const jsonText = $(el).html();
       if (!jsonText) return;
       const data = JSON.parse(jsonText);
       const offer = Array.isArray(data) ? data[0]?.offers : data?.offers;
-      if (offer?.price) {
-        price = parsePrice(offer.price);
-      }
-    } catch (e) {
-      console.warn('JSON-LD parse error', e);
-    }
+      if (offer?.price) price = parsePrice(offer.price);
+    } catch {}
   });
 
   if (price !== null) return price;
 
-  // 2️⃣ common selectors
-  const priceSelectors = [
+  const selectors = [
     '[itemprop="price"]',
     '[data-sqe="price"]',
     '.price',
     '.product-price',
     '#priceblock_ourprice',
     '#priceblock_dealprice',
-    '[data-at="product_price"]'
   ];
 
-  for (const sel of priceSelectors) {
+  for (const sel of selectors) {
     const t = $(sel).attr('content') || $(sel).text();
     if (t) {
       price = parsePrice(t);
@@ -61,96 +54,101 @@ function extractPrice($: any, html: string): number | null {
     }
   }
 
-  if (price !== null) return price;
-
-  // 3️⃣ regex fallback
-  const match = html.match(/"price"\s*:\s*"([\d.,]+)"/);
-  if (match) price = parsePrice(match[1]);
-
   return price;
 }
 
-// --- fetch with timeout & UA ---
 async function fetchWithTimeout(url: string, timeout = 10000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    console.log('Fetching URL:', url);
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7'
-      },
+    return await fetch(url, {
       redirect: 'follow',
-      signal: controller.signal
+      signal: controller.signal,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      },
     });
-
-    console.log('Fetch status:', res.status, res.statusText);
-    return res;
   } finally {
     clearTimeout(id);
   }
 }
 
-// --- route POST ---
+/* ================= route ================= */
+
 export async function POST(req: Request) {
+  const { url } = await req.json();
+
+  // 👉 product rỗng để nhập tay
+  const manualProduct = {
+    link: url,
+    title: null,
+    description: null,
+    price_eur: null,
+    size: null,
+    image: null,
+    manual: true, // 👈 optional flag cho frontend
+  };
+
+  if (!url) {
+    return NextResponse.json(manualProduct);
+  }
+
+  let upstream;
   try {
-    const { url } = await req.json();
-    if (!url) return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    upstream = await fetchWithTimeout(url);
+  } catch {
+    return NextResponse.json(manualProduct);
+  }
 
-    let upstream;
-    try {
-      upstream = await fetchWithTimeout(url);
-      if (!upstream.ok) {
-        return NextResponse.json({ error: `Failed to fetch url (status ${upstream.status})` }, { status: 400 });
-      }
-    } catch (e: any) {
-      console.error('Fetch error:', e.message);
-      return NextResponse.json({ error: 'Failed to fetch url (network error or timeout)' }, { status: 500 });
-    }
+  // 🚨 WEBSITE CHẶN (403, 401, 429…)
+  if (!upstream.ok) {
+    console.warn('Blocked by website:', upstream.status);
+    return NextResponse.json(manualProduct);
+  }
 
+  try {
     const html = await upstream.text();
     const $ = cheerio.load(html);
 
-    // --- parse fields ---
-    const title = $('meta[property="og:title"]').attr('content') ||
-                  $('title').text() ||
-                  $('h1').first().text() || null;
+    const title =
+      $('meta[property="og:title"]').attr('content') ||
+      $('title').text() ||
+      $('h1').first().text() ||
+      null;
 
-    const description = $('meta[name="description"]').attr('content') ||
-                        $('meta[property="og:description"]').attr('content') ||
-                        $('p').first().text() || null;
+    const description =
+      $('meta[name="description"]').attr('content') ||
+      $('meta[property="og:description"]').attr('content') ||
+      null;
 
-    const imgRaw = $('meta[property="og:image"]').attr('content') || $('img').first().attr('src') || null;
-    let image: string | null = null;
-    if (imgRaw) {
-      image = imgRaw.startsWith('//') ? 'https:' + imgRaw : new URL(imgRaw, url).toString();
-    }
+    const imgRaw =
+      $('meta[property="og:image"]').attr('content') ||
+      $('img').first().attr('src') ||
+      null;
 
-    // size detection
-    const sizeRegex = /(\d+(\.\d+)?\s?(ml|mL|g|kg|L|l|oz|cl))/gi;
-    const sizeMatches = html.match(sizeRegex);
-    const size = sizeMatches?.[0] || null;
+    const image = imgRaw
+      ? imgRaw.startsWith('//')
+        ? 'https:' + imgRaw
+        : new URL(imgRaw, url).toString()
+      : null;
 
-    // price
+    const sizeMatch = html.match(/(\d+(\.\d+)?\s?(ml|mL|g|kg|L|l|oz|cl))/i);
     const price_eur = extractPrice($, html);
 
-    const out = {
+    return NextResponse.json({
       link: url,
       title: title?.trim() || null,
       description: description?.trim() || null,
       price_eur,
-      size,
+      size: sizeMatch?.[0] || null,
       image,
-      source: url
-    };
-
-    console.log('DEBUG parsed product:', out);
-    return NextResponse.json(out);
-
-  } catch (e: any) {
-    console.error('Route error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+      manual: false,
+    });
+  } catch (e) {
+    console.error('Parse error:', e);
+    return NextResponse.json(manualProduct);
   }
 }

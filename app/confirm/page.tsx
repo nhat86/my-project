@@ -32,34 +32,33 @@ export default function ConfirmPage() {
     customer.name && customer.contact &&
     (customer.deliveryMethod === 'warehouse' || customer.address);
 
-    const handleSubmit = async () => {
-      setLoading(true);
-      setMessage(null);
+  const handleSubmit = async () => {
+    setLoading(true);
+    setMessage(null);
 
-      try {
-        const res = await fetch('/api/send-purchase', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product,
-            quote: calcTotal(product),
-            customer,
-          }),
-        });
+    try {
+      const res = await fetch('/api/send-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product,
+          quote: calcTotal(product),
+          customer,
+        }),
+      });
 
-        if (!res.ok) throw new Error();
-        sessionStorage.setItem('customer_info', JSON.stringify(customer));  
-        setMessage('✅ Đã gửi báo giá. Bạn có thể mua thêm sản phẩm khác.');
-        sessionStorage.removeItem('parsed_product');
-        setProduct(null);
-        setShowContactModal(false);
-      } catch {
-        setMessage('❌ Có lỗi xảy ra, vui lòng thử lại.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+      if (!res.ok) throw new Error();
+      sessionStorage.setItem('customer_info', JSON.stringify(customer));
+      setMessage('✅ Đã gửi báo giá. Bạn có thể mua thêm sản phẩm khác.');
+      sessionStorage.removeItem('parsed_product');
+      setProduct(null);
+      setShowContactModal(false);
+    } catch {
+      setMessage('❌ Có lỗi xảy ra, vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const FALLBACK_RATE = 30000;
 
@@ -68,6 +67,7 @@ export default function ConfirmPage() {
     const raw = sessionStorage.getItem('parsed_product');
     if (raw) setProduct(JSON.parse(raw));
   }, []);
+
   // ================= LOAD CUSTOMER =================
   useEffect(() => {
     const rawCustomer = sessionStorage.getItem('customer_info');
@@ -122,42 +122,53 @@ export default function ConfirmPage() {
     v.toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' VND';
 
   if (!product) {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Xác nhận sản phẩm</h1>
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold mb-4">Xác nhận sản phẩm</h1>
 
-      {message && (
-        <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-300">
-          <p className="text-green-700 font-semibold mb-2">
-            {message}
+        {message && (
+          <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-300">
+            <p className="text-green-700 font-semibold mb-2">
+              {message}
+            </p>
+            <a
+              href="/link"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              ➕ Thêm sản phẩm khác
+            </a>
+          </div>
+        )}
+
+        {!message && (
+          <p>
+            Chưa có sản phẩm. Quay lại{' '}
+            <a href="/link" className="text-blue-600 underline">
+              nhập link
+            </a>.
           </p>
-          <a
-            href="/link"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded"
-          >
-            ➕ Thêm sản phẩm khác
-          </a>
-        </div>
-      )}
-
-      {!message && (
-        <p>
-          Chưa có sản phẩm. Quay lại{' '}
-          <a href="/link" className="text-blue-600 underline">
-            nhập link
-          </a>.
-        </p>
-      )}
-    </div>
-  );
-}
-
+        )}
+      </div>
+    );
+  }
 
   const q = calcTotal(product);
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Xác nhận sản phẩm</h1>
+
+      {/* 🔧 NEW: cảnh báo khi không parse được */}
+      {(!product?.title || !product?.price_eur) && (
+        <div className="mb-4 p-4 rounded-lg bg-yellow-50 border border-yellow-300">
+          <p className="text-yellow-800 font-semibold mb-1">
+            ⚠️ Thông tin không thể trích xuất tự động
+          </p>
+          <p className="text-sm text-yellow-700">
+            Vui lòng nhập thủ công thông tin sản phẩm bên dưới để tiếp tục nhận báo giá.
+          </p>
+        </div>
+      )}
 
       {message && (
         <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-300">
@@ -181,10 +192,35 @@ export default function ConfirmPage() {
             />
           )}
 
-          <ProductDescription
-            title={product.title}
-            description={product.description}
-          />
+          {/* 🔧 NEW: nhập tay tên sản phẩm */}
+          <div className="mt-2">
+            <label className="font-semibold">
+              Tên sản phẩm <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full border px-2 py-1 rounded"
+              value={product.title || ''}
+              placeholder="Nhập tên sản phẩm"
+              onChange={(e) =>
+                setProduct({ ...product, title: e.target.value })
+              }
+            />
+          </div>
+
+        
+
+          {/* 🔧 NEW: mô tả tuỳ chọn */}
+          <div className="mt-2">
+            <label className="font-semibold">Mô tả (tuỳ chọn)</label>
+            <textarea
+              className="w-full border px-2 py-1 rounded min-h-[70px]"
+              value={product.description || ''}
+              placeholder="Màu sắc, phiên bản, ghi chú thêm…"
+              onChange={(e) =>
+                setProduct({ ...product, description: e.target.value })
+              }
+            />
+          </div>
 
           <div className="mt-4">
             <label className="font-semibold">Size</label>
@@ -196,7 +232,9 @@ export default function ConfirmPage() {
           </div>
 
           <div className="mt-2">
-            <label className="font-semibold">Giá gốc (EUR)</label>
+            <label className="font-semibold">
+              Giá gốc (EUR) <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               className="w-full border px-2 py-1 rounded"
@@ -227,17 +265,14 @@ export default function ConfirmPage() {
 
           <button
             className="w-full mt-4 px-4 py-3 bg-green-600 text-white rounded font-semibold disabled:opacity-50"
-            disabled={!product?.price_eur}
+            disabled={!product?.title || !product?.price_eur} // 🔧 NEW
             onClick={() => {
               if (hasCustomerInfo) {
-                // đã có thông tin → gửi luôn
                 handleSubmit();
               } else {
-                // chưa có → hỏi info
                 setShowContactModal(true);
               }
             }}
-
           >
             ✅ Xác nhận mua sản phẩm & nhận báo giá
           </button>
