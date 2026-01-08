@@ -24,7 +24,7 @@ function parsePrice(priceStr?: string | null): number | null {
 function extractPrice($: any, html: string): number | null {
   let price: number | null = null;
 
-  $('script[type="application/ld+json"]').each((_, el: Element) => {
+  $('script[type="application/ld+json"]').each((_: number, el: Element) => {
     if (price !== null) return;
     try {
       const jsonText = $(el).html();
