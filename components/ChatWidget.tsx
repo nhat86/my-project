@@ -11,14 +11,19 @@ export default function ChatWidget() {
   return (
     <>
       {/* Chat Icon */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center"
-        aria-label="Chat hỗ trợ"
-        title="Hỗ trợ mua sắm & dịch thuật Pháp-Việt"
-      >
-        💬
-      </button>
+      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-center">
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center transition transform hover:scale-110"
+          aria-label="Chat hỗ trợ"
+          title="Hỗ trợ mua sắm & dịch thuật Pháp-Việt"
+        >
+          💬
+        </button>
+        <span className="mt-1 text-xs text-center text-blue-600 font-medium">
+          Hỗ trợ mua sắm & dịch thuật
+        </span>
+      </div>
 
       {/* Chat Popup */}
       {open && (

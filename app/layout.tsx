@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import { UserProvider } from "./context/UserContext";
 import { Poppins, Dancing_Script } from "next/font/google";
 import ChatWidget from "@/components/ChatWidget";
+import ContactBar from "@/components/ContactBar"; // <-- import ContactBar
 
 export const metadata = {
   title: "Vietnam-France Shop",
@@ -41,6 +42,9 @@ export default function RootLayout({
 
           {/* Chat nổi – xuất hiện trên mọi trang */}
           <ChatWidget />
+
+          {/* ContactBar cố định góc phải giữa màn hình */}
+          <ContactBar />
         </UserProvider>
       </body>
     </html>
